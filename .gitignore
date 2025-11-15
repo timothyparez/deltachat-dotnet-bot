@@ -612,3 +612,4 @@ test-results/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,csharp,dotnetcore,monodevelop
 deltachat-rpc-server
+accounts/
