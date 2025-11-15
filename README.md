@@ -11,6 +11,10 @@ JSON-RPC generator to work for any language other than `rust` and `typescript`
   - Copy the `.tar` file to your device
   - Call `client.ImportBackup(<accountid>, <path-to-your-tar-file>)`
   - Implement `IMessageProcessor` to process messages
+
+## CommandProcessor Example
+
+![screenshot of Delta.chat interacting with the bot](screenshot.png)
  
 
 
