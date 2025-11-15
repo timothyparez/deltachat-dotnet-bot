@@ -1,13 +1,5 @@
 using Newtonsoft.Json;
 
-
-public static class AccountSetting
-{
-    public const string BOT = "bot";
-    public const string MAIL_ADDRESS = "addr";
-    public const string MAIL_PASSWORD = "mail_pw";
-}
-
 public class DeltaRpcClient
 {
     private static Random random = new Random();
@@ -60,8 +52,7 @@ public class DeltaRpcClient
 
         if (response.Error != null)
         {
-            MarkupLineInterpolated($"[red]ERROR:[/] [yellow]{Spectre.Console.Markup.Escape(response.Error.ToString())}[/]");
-            //throw new RpcResponseException(response.Error);
+            MarkupLineInterpolated($"[red]ERROR:[/] [yellow]{Spectre.Console.Markup.Escape(response.Error.ToString())}[/]");            
         }
 
         return response.Result;
