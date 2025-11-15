@@ -6,7 +6,7 @@ Write(new FigletText("NG-Bot v1.0").LeftJustified().Color(Color.Purple));
 MarkupLineInterpolated($"[grey]{new string('-', System.Console.WindowWidth)}[/]");
 
 var serverManager = new ServerManager();
-var messageProcessor = new EchoMessageProcessor();
+var messageProcessor = new CommandProcessor();
 await serverManager.StartAsync();
 
 var client = new DeltaRpcClient(serverManager.ServerProcess.StandardInput, serverManager.ServerProcess.StandardOutput);
