@@ -17,7 +17,7 @@ public class CommandProcessor : IMessageProcessor
 
     public MessageData? ProcessChatMessage(ChatMessage chatMessage)
     {
-        if (chatMessage == null || string.IsNullOrWhiteSpace(chatMessage.Text))
+        if (chatMessage == null || string.IsNullOrWhiteSpace(chatMessage.Text) || !chatMessage.Text.StartsWith("/"))
             return null;        
         
         string text = chatMessage.Text.Replace('–', '-')
