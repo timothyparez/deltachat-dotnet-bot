@@ -119,7 +119,7 @@ async Task ProcessMessage(int messageId)
 
     if (chatMessage.FromId != SpecialContactId.Self && !chatMessage.IsBot && !chatMessage.IsInfo)
     {
-        chatMessageResponseData = messageProcessor.ProcessChatMessage(chatMessage);
+        chatMessageResponseData = await messageProcessor.ProcessChatMessageAsync(chatMessage);
     }
     else
     {
