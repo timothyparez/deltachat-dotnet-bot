@@ -112,7 +112,7 @@ while (true)
     }
 }
 
-void ProcessMessage(int messageId)
+async Task ProcessMessage(int messageId)
 {
     var chatMessage = client.GetMessage(currentAccountId, messageId);
     MessageData? chatMessageResponseData = null;

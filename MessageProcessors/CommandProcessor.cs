@@ -2,20 +2,23 @@ using System.Text.RegularExpressions;
 public class CommandProcessor : IMessageProcessor
 {
     private static Random random = new Random();
-    private readonly Dictionary<string, Func<string, ChatMessage, MessageData?>> commands;
+        
+    private readonly Dictionary<string, Func<string, ChatMessage, Task<MessageData?>>> commands;
+
     private static Regex commandRegex = new Regex(@"/{1}(?<command>\S*)(\s*)-{0,1}(?<args>.*)", RegexOptions.Compiled);
 
     public CommandProcessor()
-    {
-        commands = new Dictionary<string, Func<string, ChatMessage, MessageData?>>(StringComparer.OrdinalIgnoreCase)
+    {        
+        commands = new Dictionary<string, Func<string, ChatMessage, Task<MessageData?>>>(StringComparer.OrdinalIgnoreCase)
         {
-            { "rolldice", HandleRollDice},
-            { "flipcoin", HandleFlipCoin},
-            { "help", HandleHelp}
+            { "rolldice", HandleRollDiceAsync},
+            { "flipcoin", HandleFlipCoinAsync},
+            { "help", HandleHelpAsync},
+            { "ask", HandleAskAsync }
         };
     }
 
-    public MessageData? ProcessChatMessage(ChatMessage chatMessage)
+    public async Task<MessageData?> ProcessChatMessageAsync(ChatMessage chatMessage)
     {
         if (chatMessage == null || string.IsNullOrWhiteSpace(chatMessage.Text) || !chatMessage.Text.StartsWith("/"))
             return null;        
@@ -36,7 +39,7 @@ public class CommandProcessor : IMessageProcessor
 
             if (commands.TryGetValue(command, out var handler))
             {                
-                return handler(args, chatMessage);
+                return await handler(args, chatMessage);
             }
             else
             {
@@ -53,7 +56,15 @@ public class CommandProcessor : IMessageProcessor
         }
     }
 
-    private MessageData? HandleRollDice(string arguments, ChatMessage chatMessage)
+    private async Task<MessageData?> HandleAskAsync(string arguments, ChatMessage message)
+    {
+        var index = arguments.IndexOf(' ');
+        var question = arguments[index..];
+        var response = LLMClient.Ask("Only provide an answer if you are 100% sure it is correct, otherwise let me know you don't know", question).Result;
+        return new MessageData() { Text = response };        
+    }
+
+    private async Task<MessageData?> HandleRollDiceAsync(string arguments, ChatMessage chatMessage)
     {
         var diceFaces = 6;
         var args = arguments.Split(' ');
@@ -76,13 +87,13 @@ public class CommandProcessor : IMessageProcessor
         };
     }
 
-    private MessageData? HandleFlipCoin(string _, ChatMessage message)
+    private async Task<MessageData?> HandleFlipCoinAsync(string _, ChatMessage message)
     {
         var flipResult = random.Next(int.MaxValue) % 2 == 0 ? "Heads" : "Tails" ;
         return new MessageData() { Text = $"🪙 You flipped a coin: {flipResult}"};
     }
 
-    private MessageData? HandleHelp(string _, ChatMessage message)
+    private async Task<MessageData?> HandleHelpAsync(string _, ChatMessage message)
     {
         var messageBuilder = new StringBuilder();
         messageBuilder.AppendLine("NG-Bot Usage");
