@@ -74,34 +74,41 @@ client.StartIOForAccount(currentAccountId);
 
 while (true)
 {
-    var deltaEvent = client.GetNextEvent();
-
-    switch (deltaEvent.@event.kind.ToString())
+    try
     {
-        case EventType.INCOMING_MSG:            
-            ProcessMessage(deltaEvent.@event.msgId);
-            break;
-        case EventType.INFO:
-            MarkupLineInterpolated($"{M.Escape(DateTime.Now.ToShortTimeString())}: {M.Escape(deltaEvent.@event.msg.ToString())}");
-            break;
-        case EventType.WARNING:
-            MarkupLineInterpolated($"[red3_1]{M.Escape(DateTime.Now.ToShortTimeString())}[/]: {M.Escape(deltaEvent.@event.msg.ToString())}");
-            break;
-        case EventType.ERROR:
-            MarkupLineInterpolated($"[red1]{M.Escape(DateTime.Now.ToShortTimeString())} [/]: {M.Escape(deltaEvent.@event.msg.ToString())}");
-            break;
-        case EventType.CONNECTIVITY_CHANGED:
-            MarkupLineInterpolated($"[darkgoldenrod]Connectivity changed[/]");
-            break;
-        case EventType.IMAP_INBOX_IDLE:
-            MarkupLineInterpolated($"[lightsteelblue1]IMAP indbox idle[/]");
-            break;
-        case EventType.INCOMING_MSG_BUNCH:
-            MarkupLine("Incoming message bunch");
-            break;
-        default:
-            MarkupLineInterpolated($"[lightgoldenrod1]Unknown event kind[/]: {M.Escape(deltaEvent.@event.kind.ToString())}");
-            break;
+        var deltaEvent = client.GetNextEvent();
+
+        switch (deltaEvent.@event.kind.ToString())
+        {
+            case EventType.INCOMING_MSG:
+                await ProcessMessage(deltaEvent.@event.msgId);
+                break;
+            case EventType.INFO:
+                MarkupLineInterpolated($"{M.Escape(DateTime.Now.ToShortTimeString())}: {M.Escape(deltaEvent.@event.msg.ToString())}");
+                break;
+            case EventType.WARNING:
+                MarkupLineInterpolated($"[red3_1]{M.Escape(DateTime.Now.ToShortTimeString())}[/]: {M.Escape(deltaEvent.@event.msg.ToString())}");
+                break;
+            case EventType.ERROR:
+                MarkupLineInterpolated($"[red1]{M.Escape(DateTime.Now.ToShortTimeString())} [/]: {M.Escape(deltaEvent.@event.msg.ToString())}");
+                break;
+            case EventType.CONNECTIVITY_CHANGED:
+                MarkupLineInterpolated($"[darkgoldenrod]Connectivity changed[/]");
+                break;
+            case EventType.IMAP_INBOX_IDLE:
+                MarkupLineInterpolated($"[lightsteelblue1]IMAP indbox idle[/]");
+                break;
+            case EventType.INCOMING_MSG_BUNCH:
+                MarkupLine("Incoming message bunch");
+                break;
+            default:
+                MarkupLineInterpolated($"[lightgoldenrod1]Unknown event kind[/]: {M.Escape(deltaEvent.@event.kind.ToString())}");
+                break;
+        }
+    }
+    catch (Exception ex)
+    {
+        MarkupLineInterpolated($"Unhandled exception while handling event: {ex.ToString()}");
     }
 }
 
