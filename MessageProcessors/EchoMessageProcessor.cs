@@ -4,7 +4,7 @@ using M = Spectre.Console.Markup;
 
 public class EchoMessageProcessor() : IMessageProcessor
 {    
-    public MessageData? ProcessChatMessage(ChatMessage chatMessage)
+    public async Task<MessageData?> ProcessChatMessageAsync(ChatMessage chatMessage)
     {
         if (chatMessage.FromId != SpecialContactId.Self && !chatMessage.IsBot && !chatMessage.IsInfo)
         {
@@ -19,8 +19,3 @@ public class EchoMessageProcessor() : IMessageProcessor
     }
 
 }
-
-
-
-
-
