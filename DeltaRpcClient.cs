@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 public class DeltaRpcClient
 {
     private static Random random = new Random();
@@ -10,6 +8,7 @@ public class DeltaRpcClient
     {
         this.streamWriter = streamWriter;
         this.streamReader = streamReader;
+        this.streamWriter.AutoFlush = true;
     }
 
     public SystemInfoResult GetSystemInfo() => SendAndReceive<SystemInfoResult>(DeltaChatMethodNames.METHOD_GET_SYSTEM_INFO);
@@ -19,7 +18,7 @@ public class DeltaRpcClient
     public bool IsAccountConfigured(int accountId) => SendAndReceive<bool>(DeltaChatMethodNames.METHOD_IS_CONFIGURED, accountId);
     public object ConfigureAccount(int accountId) => SendAndReceive<object>(DeltaChatMethodNames.METHOD_CONFIGURE, accountId);
     public void StartIOForAccount(int accountId) => SendAndReceive<Void>(DeltaChatMethodNames.METHOD_START_IO, accountId);
-    public int[] GetNextMessagesForAccount(int accountId) =>  SendAndReceive<int[]>(DeltaChatMethodNames.METHOD_GET_NEXT_MSGS, accountId);
+    public int[] GetNextMessagesForAccount(int accountId) => SendAndReceive<int[]>(DeltaChatMethodNames.METHOD_GET_NEXT_MSGS, accountId);
     public object WaitForNextMessages(int accountId) => SendAndReceive<object>(DeltaChatMethodNames.METHOD_WAIT_NEXT_MSGS, accountId);
 
     public ChatMessage GetMessage(int accountId, int messageId) => SendAndReceive<ChatMessage>(DeltaChatMethodNames.METHOD_GET_MESSAGE, accountId, messageId);
@@ -27,34 +26,48 @@ public class DeltaRpcClient
     public void MarkMessagesAsSeen(int accountId, params int[] messageIds) => SendAndReceive<Void>(DeltaChatMethodNames.METHOD_MARKSEEN_MSGS, accountId, messageIds);
 
     public dynamic GetNextEvent() => SendAndReceive<dynamic>(DeltaChatMethodNames.METHOD_GET_NEXT_EVENT);
-    
+
     public void ImportBackup(int accountId, string path, string passphrase) => SendAndReceive<Void>(DeltaChatMethodNames.METHOD_IMPORT_BACKUP, accountId, path, passphrase);
 
     public void SendMessage(int accountId, int chatId, MessageData messageData) => SendAndReceive<object>(DeltaChatMethodNames.METHOD_SEND_MSG, accountId, chatId, messageData);
 
     private T SendAndReceive<T>(string method, params object[] paremeters)
     {
-        var request = new Request(method: method, id: random.Next(0, 10000), @params: paremeters);
-        var requestJson = JsonConvert.SerializeObject(request);
-        streamWriter.WriteLine(requestJson);        
-        var responseJson = streamReader.ReadLine();
-        if (String.IsNullOrWhiteSpace(responseJson))
+        string? responseJson = "";
+        try
         {
-            throw new InvalidDataException("Did not receive a valid response");
+            var request = new Request(method: method, id: random.Next(0, 10000), @params: paremeters);
+            var requestJson = JsonConvert.SerializeObject(request);
+            streamWriter.WriteLine(requestJson);
+            try { streamWriter.Flush(); } catch { }
+            responseJson = streamReader.ReadLine();
+
+            MarkupLineInterpolated($"[yellow]{Spectre.Console.Markup.Escape(responseJson ?? "<empty response>")}[/]");
+
+            if (String.IsNullOrWhiteSpace(responseJson))
+            {
+                throw new InvalidDataException("Did not receive a valid response");
+            }
+
+            var response = JsonConvert.DeserializeObject<JsonRpcContainer<T>>(responseJson);
+
+            if (request.id != response.MessageId)
+            {
+                throw new InvalidDataException("The response id does not match the request id");
+            }
+
+            if (response.Error != null)
+            {
+                MarkupLineInterpolated($"[red]ERROR:[/] [yellow]{Spectre.Console.Markup.Escape(response.Error.ToString())}[/]");
+            }
+
+            return response.Result;
         }
-
-        var response = JsonConvert.DeserializeObject<JsonRpcContainer<T>>(responseJson);
-
-        if (request.id != response.MessageId)
+        catch (Exception ex)
         {
-            throw new InvalidDataException("The response id does not match the request id");
+            MarkupLineInterpolated($"SendAndReceive: [red]Exception:[/][yellow]{ex.ToString()}[/]");
+            MarkupLineInterpolated($"[red]{responseJson ?? "null"}[/]");
+            return default!;
         }
-
-        if (response.Error != null)
-        {
-            MarkupLineInterpolated($"[red]ERROR:[/] [yellow]{Spectre.Console.Markup.Escape(response.Error.ToString())}[/]");            
-        }
-
-        return response.Result;
     }
 }
