@@ -46,15 +46,13 @@ public class CommandProcessor : IMessageProcessor
             }
             else
             {
-                var messageDataAndChatId = new MessageDataAndChatId(new MessageData() { Text = $"❌ Sorry I do not understand the /{command} {args} command" }, chatMessage.ChatId);
-                responseMessageReadySubject.OnNext(messageDataAndChatId);
+                responseMessageReadySubject.OnNext(CreateResponse($"❌ Sorry I do not understand the /{command} {args} command", chatMessage.ChatId));
                 return;
             }
         }
         else
         {
-            var messageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"❌ Sorry I do not understand the command: {chatMessage.Text}", Viewtype = ViewType.TEXT }, chatMessage.ChatId);
-            responseMessageReadySubject.OnNext(messageDataAndChatId);            
+            responseMessageReadySubject.OnNext(CreateResponse($"❌ Sorry I do not understand the command: {chatMessage.Text}", chatMessage.ChatId));
         }
     }
 
@@ -62,10 +60,9 @@ public class CommandProcessor : IMessageProcessor
     {
         var index = arguments.IndexOf(' ');
         var question = arguments[index..];
-        var response = LLMClient.Ask("Only provide an answer if you are 100% sure it is correct, otherwise let me know you don't know", question).Result;
-        
-        var messageDataAndChatId = new MessageDataAndChatId(new MessageData() { Text = response }, chatMessage.ChatId);
-        responseMessageReadySubject.OnNext(messageDataAndChatId);
+        var llmResponse = LLMClient.Ask("Only provide an answer if you are 100% sure it is correct, otherwise let me know you don't know", question).Result;
+
+        responseMessageReadySubject.OnNext(CreateResponse(llmResponse, chatMessage.ChatId));
     }
 
     private async Task HandleRollDiceAsync(string arguments, ChatMessage chatMessage)
@@ -82,21 +79,18 @@ public class CommandProcessor : IMessageProcessor
 
         if (diceFaces < 3)
         {
-            var failedMessageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"❌ Sorry I cannot roll a D{diceFaces}" }, chatMessage.ChatId);
-            responseMessageReadySubject.OnNext(failedMessageDataAndChatId);
+            responseMessageReadySubject.OnNext(CreateResponse($"❌ Sorry I cannot roll a D{diceFaces}", chatMessage.ChatId));
             return;
         }
 
-        var messageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"🎲 You rolled a D{diceFaces}: {random.Next(0, diceFaces + 1)}" }, chatMessage.ChatId);
-        responseMessageReadySubject.OnNext(messageDataAndChatId);
+        responseMessageReadySubject.OnNext(CreateResponse($"🎲 You rolled a D{diceFaces}: {random.Next(0, diceFaces + 1)}", chatMessage.ChatId));
         return;
     }
 
     private async Task HandleFlipCoinAsync(string _, ChatMessage chatMessage)
     {
         var flipResult = random.Next(int.MaxValue) % 2 == 0 ? "Heads" : "Tails";
-        var messageDataAndChatId = new MessageDataAndChatId(new MessageData() { Text = $"🪙 You flipped a coin: {flipResult}" }, chatMessage.ChatId);
-        responseMessageReadySubject.OnNext(messageDataAndChatId);
+        responseMessageReadySubject.OnNext(CreateResponse($"🪙 You flipped a coin: {flipResult}", chatMessage.ChatId));
     }
 
     private async Task HandleHelpAsync(string _, ChatMessage chatMessage)
@@ -114,9 +108,11 @@ public class CommandProcessor : IMessageProcessor
         messageBuilder.AppendLine("\t/rolldice -D6");
         messageBuilder.AppendLine("\t/rolldice d100");
         messageBuilder.AppendLine("\t/rolldice -d100");
-        var messageDataAndChatId = new MessageDataAndChatId(new MessageData() { Text = $"❓ {messageBuilder}" }, chatMessage.ChatId);
-        responseMessageReadySubject.OnNext(messageDataAndChatId);
+        
+        responseMessageReadySubject.OnNext(CreateResponse($"❓ {messageBuilder}", chatMessage.ChatId));
     }
+
+    private MessageDataAndChatId CreateResponse(string text, int chatId) => new MessageDataAndChatId(new MessageData() { Text = text, Viewtype = ViewType.TEXT }, chatId);
 }
 
 
