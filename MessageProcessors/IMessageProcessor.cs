@@ -2,7 +2,8 @@ using Microsoft.VisualBasic;
 
 public interface IMessageProcessor
 {
-    public Task<MessageData?> ProcessChatMessageAsync(ChatMessage chatMessage);
+    public Task ProcessChatMessageAsync(ChatMessage chatMessage);
+    public IObservable<MessageDataAndChatId> ResponseMessageReady { get; }
 }
 
 
