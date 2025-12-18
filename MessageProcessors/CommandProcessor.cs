@@ -48,12 +48,13 @@ public class CommandProcessor : IMessageProcessor
             {
                 var messageDataAndChatId = new MessageDataAndChatId(new MessageData() { Text = $"❌ Sorry I do not understand the /{command} {args} command" }, chatMessage.ChatId);
                 responseMessageReadySubject.OnNext(messageDataAndChatId);
+                return;
             }
         }
         else
         {
             var messageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"❌ Sorry I do not understand the command: {chatMessage.Text}", Viewtype = ViewType.TEXT }, chatMessage.ChatId);
-            responseMessageReadySubject.OnNext(messageDataAndChatId);
+            responseMessageReadySubject.OnNext(messageDataAndChatId);            
         }
     }
 
@@ -83,10 +84,12 @@ public class CommandProcessor : IMessageProcessor
         {
             var failedMessageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"❌ Sorry I cannot roll a D{diceFaces}" }, chatMessage.ChatId);
             responseMessageReadySubject.OnNext(failedMessageDataAndChatId);
+            return;
         }
 
         var messageDataAndChatId = new MessageDataAndChatId(new MessageData { Text = $"🎲 You rolled a D{diceFaces}: {random.Next(0, diceFaces + 1)}" }, chatMessage.ChatId);
         responseMessageReadySubject.OnNext(messageDataAndChatId);
+        return;
     }
 
     private async Task HandleFlipCoinAsync(string _, ChatMessage chatMessage)
