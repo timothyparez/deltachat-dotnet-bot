@@ -1,12 +1,16 @@
 ﻿
 
+using System.Runtime.CompilerServices;
 using M = Spectre.Console.Markup;
+
+IDisposable responseMessageDataReadySubscription;
 
 Write(new FigletText("NG-Bot v1.0").LeftJustified().Color(Color.Purple));
 MarkupLineInterpolated($"[grey]{new string('-', System.Console.WindowWidth)}[/]");
 
 var serverManager = new ServerManager();
 var messageProcessor = new CommandProcessor();
+
 await serverManager.StartAsync();
 
 var client = new DeltaRpcClient(serverManager.ServerProcess.StandardInput, serverManager.ServerProcess.StandardOutput);
@@ -70,6 +74,8 @@ var isAccountConfigured = client.IsAccountConfigured(currentAccountId);
 //     }
 // }
 
+responseMessageDataReadySubscription = messageProcessor.ResponseMessageReady.Subscribe(HandleResponseMessage);
+
 client.StartIOForAccount(currentAccountId);
 
 while (true)
@@ -115,27 +121,24 @@ while (true)
 async Task ProcessMessage(int messageId)
 {
     var chatMessage = client.GetMessage(currentAccountId, messageId);
-    MessageData? chatMessageResponseData = null;
+    
 
     if (chatMessage.FromId != SpecialContactId.Self && !chatMessage.IsBot && !chatMessage.IsInfo)
     {
-        chatMessageResponseData = await messageProcessor.ProcessChatMessageAsync(chatMessage);
+        await messageProcessor.ProcessChatMessageAsync(chatMessage);
     }
     else
     {
         MarkupLineInterpolated($"[fuchsia]{M.Escape(chatMessage.Text)}[/]");        
     }
-
-    if (chatMessageResponseData != null)
-    {
-        client.SendMessage(currentAccountId, chatMessage.ChatId, chatMessageResponseData);
-    }
-    else
-    {
-        MarkupLine("[red]Did not get a valid [yellow]MessageData[/] instance from the message processor[/]");
-    }
 }
 
+
+
+void HandleResponseMessage(MessageDataAndChatId messageDataAndChatId)
+{
+    client.SendMessage(currentAccountId, messageDataAndChatId.ChatId, messageDataAndChatId.messageData);
+}
 
 
 
