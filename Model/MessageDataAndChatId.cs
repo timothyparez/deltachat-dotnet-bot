@@ -1,0 +1,1 @@
+public record MessageDataAndChatId(MessageData messageData, int ChatId);
